@@ -1,6 +1,8 @@
 #include <iostream>
-#include <bitset>
-#include <math.h>
+#include <boost/dynamic_bitset.hpp>
+#include <map>
+
+#include "HuffmanCode.h"
 
 /*
 extern "C" {
@@ -8,105 +10,52 @@ extern "C" {
 }
 */
 
-// the amount of bits to describe one character
-const int CHAR_WIDTH = 5;
-
-/*
- * A list of index to index matching. The input index is the char that is to be 
- * mapped. The output is the index of that char in the LEGAL_CHARS.
- * 255 represents out of bounds.
- */
-const unsigned char CHAR_TABLE[] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0x1a, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, // maps ' ' --> 26
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x1b, 0xFF, 0xFF, 0xFF, // maps '.' --> 27
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x01, 0x02, // maps 'a' --> 0, 'b' --> 1 [...]
-    0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, // through a-z
-    0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 
-    0x17, 0x18, 0x19, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 
+// pre compute huffman code table for text messages
+const std::map<char, HuffmanCode> HUFF_CODES = {
+    { ' ',  { 0b111, 3 } },
+    { '\n', { 0b011, 3 } },
+    { 'e',  { 0b1100, 4 } },
+    { 't',  { 0b1010, 4 } },
+    { 'o',  { 0b1000, 4 } },
+    { 'a',  { 0b0100, 4 } },
+    { 'i',  { 0b0011, 4 } },
+    { 's',  { 0b0000, 4 } },
+    { 'h',  { 0b11011, 5 } },
+    { 'n',  { 0b10111, 5 } },
+    { 'r',  { 0b10011, 5 } },
+    { 'u',  { 0b01011, 5 } },
+    { 'l',  { 0b00100, 5 } },
+    { 'd',  { 0b00101, 5 } },
+    { 'm',  { 0b00010, 5 } },
+    { 'g',  { 0b110100, 6 } },
+    { 'y',  { 0b101100, 6 } },
+    { 'k',  { 0b100101, 6 } },
+    { 'f',  { 0b100100, 6 } },
+    { 'p',  { 0b010101, 6 } },
+    { 'w',  { 0b000111, 6 } },
+    { 'b',  { 0b010100, 6 } },
+    { 'v',  { 0b1101011, 7 } },
+    { 'c',  { 0b1101010, 7 } },
+    { '\'', { 0b10110111, 8 } },
+    { '.',  { 0b00011000, 8 } },
+    { 'z',  { 0b00011001, 8 } },
+    { 'j',  { 0b101101011, 9 } }
 };
 
-const char LEGAL_CHARS[] = {
-    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', ' ', '.'
-};
-
-
-/**
- * This function assumes that all the characters included are legal.
- */
-inline int getEncodedLen(std::string s) {
-    return 1 + (s.length() * 5) / 8;
-}
-
-inline unsigned char charToIndex(char c) {
-    return CHAR_TABLE[static_cast<unsigned char>(c)];
-}
-
-inline char indexToChar(unsigned char i) {
-    return LEGAL_CHARS[i];
-}
-
-void encodeStr(char out[], std::string& s) {
-    unsigned char bytes_out[(s.length()*5) + 1] = {0};
-    for (int i=0; i<s.length(); i++) {
-        bytes_out[i] = charToIndex(s[i]);
+void encodeStr(std::string& input) {
+    int total = 0;
+    for (char s : input) {
+        total += HUFF_CODES.at(s).len;
     }
 
-    int byte_index = -1;
-    int char_index = -1;
-    for (int i=0; i<s.length()*5; i++) {
-        int bit_index = i % 8;
-        int char_bit = i % 5;
-
-        if (bit_index == 0) {
-            ++byte_index;
-        }
-        if (char_bit == 0) {
-            ++char_index;
-        }
-
-        int bit = ((bytes_out[char_index] & (1 << char_bit)) >> char_bit);
-        out[byte_index] |= bit << bit_index;
-
-    }
-}
-
-void decodeStr(char input[], char output[], int input_len) {
-    char buffer = 0;
-    int byte_index = 0;
-    int char_index = 0;
-    for (int i=0; i<input_len*8; i++) {
-        int bit_index = i % 8;
-        int char_bit = i % 5;
-
-        if (bit_index == 0 && i != 0) {
-            ++byte_index;
-        }
-        if (char_bit == 0 && i != 0) {
-            output[char_index] = indexToChar(buffer);
-
-            ++char_index;
-            buffer = 0;
-        }
-
-        int bit = ((input[byte_index] & (1 << bit_index)) >> bit_index);
-        buffer |= bit << char_bit;
-    }
+    std::cout << (1 + total/8) << " bytes " << total << " bits\n";
 }
 
 int main(int argc, char* argv[]) {
-    std::string s = "this is a mega bruh moment my dude.";
-    char out[getEncodedLen(s)] = {0};
-    encodeStr(out, s);
+    //std::string s = "i think this is a reasonable size for your average message. "
+    //                "its about two sentances long on average.";
+    std::string s;
+    std::getline(std::cin, s);
 
-    char dec[s.length()];
-    decodeStr(out, dec, getEncodedLen(s));
-    std::cout << dec << "\n";
+    encodeStr(s);
 }

@@ -4,9 +4,16 @@ cc_library(
     hdrs = ["encoder.h"],
 )
 
+cc_library(
+    name = "huffman_code",
+    hdrs = ["HuffmanCode.h"],
+)
+
 cc_binary(
     name = "main",
     srcs = ["main.cpp"],
     deps = [
+        ":huffman_code",
+        "@boost//:dynamic_bitset",
     ],
 )
