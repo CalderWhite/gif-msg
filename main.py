@@ -1,3 +1,6 @@
+from PIL import Image
+
+
 def decode(arr):
     # python's sort function is lexographic (meaning it takes into consideration
     # the different values within each nested tuple in their order or priority)
@@ -54,10 +57,66 @@ def encode(values, raw):
 
     return out
 
+def transcode_gif(g, encoded):
+    gct_mapping = {}
+    for i in range(len(g.gct)):
+        gct_mapping[i] = encoded.index(g.gct[i])
 
-values = [3,3]
-raw = [1,2,3,4]
+    for i, b in enumerate(g.blocks):
+        if type(b) == gif.ImageBlock:
+            data = b.decompress()
+            for j, v in enumerate(data):
+                data[j] = gct_mapping[v]
 
-encoded = encode(values, raw)
-decoded = decode(encoded)
-print(decoded)
+            b.compress(data)
+
+            g.blocks[i] = b
+
+
+def enc_test():
+    s = "this is a test"
+    # the padding is required since the max value is dictated by the length of the list
+    s += "\0" * (128 - len(s))
+    values = [ord(i) for i in s]
+
+    im = Image.open("source.gif")
+    palette = []
+    _p = im.getpalette()
+    for i in range(0, len(_p), 3):
+        palette += [(_p[i], _p[i+1], _p[i+2])]
+    encoded_gct = encode(values, palette)
+
+    #palette.sort()
+    print("Original:", palette)
+    print("Encoded:", encoded_gct)
+
+
+    new_indicies = [encoded_gct.index(i) for i in palette]
+    print(new_indicies)
+    im.remap_palette(new_indicies)
+
+    # POST REMAP ################################
+    palette = []
+    _p = im.getpalette()
+    for i in range(0, len(_p), 3):
+        palette += [(_p[i], _p[i+1], _p[i+2])]
+    print(palette)
+
+    im.save("out.gif", save_all=True)
+
+def dec_test():
+    im = Image.open("out.gif")
+    palette = []
+    _p = im.getpalette()
+    for i in range(0, len(_p), 3):
+        palette += [(_p[i], _p[i+1], _p[i+2])]
+
+    #print("Decoded:", palette)
+
+    decoded = decode(palette)
+    print(decoded)
+    #decoded = [chr(i) for i in decoded]
+    #print("".join(decoded))
+
+enc_test()
+dec_test()
