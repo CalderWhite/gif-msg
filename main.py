@@ -57,21 +57,6 @@ def encode(values, raw):
 
     return out
 
-def transcode_gif(g, encoded):
-    gct_mapping = {}
-    for i in range(len(g.gct)):
-        gct_mapping[i] = encoded.index(g.gct[i])
-
-    for i, b in enumerate(g.blocks):
-        if type(b) == gif.ImageBlock:
-            data = b.decompress()
-            for j, v in enumerate(data):
-                data[j] = gct_mapping[v]
-
-            b.compress(data)
-
-            g.blocks[i] = b
-
 
 def enc_test():
     s = "this is a test"
@@ -84,25 +69,17 @@ def enc_test():
     _p = im.getpalette()
     for i in range(0, len(_p), 3):
         palette += [(_p[i], _p[i+1], _p[i+2])]
-    encoded_gct = encode(values, palette)
+    encoded_gct = encode(values, palette.copy())
 
-    #palette.sort()
-    print("Original:", palette)
-    print("Encoded:", encoded_gct)
+    new_indicies = [palette.index(i) for i in encoded_gct]
 
-
-    new_indicies = [encoded_gct.index(i) for i in palette]
-    print(new_indicies)
-    im.remap_palette(new_indicies)
+    frames = []
+    for i in range(im.n_frames):
+        frames.append(im.remap_palette(new_indicies))
+        im.seek(i)
 
     # POST REMAP ################################
-    palette = []
-    _p = im.getpalette()
-    for i in range(0, len(_p), 3):
-        palette += [(_p[i], _p[i+1], _p[i+2])]
-    print(palette)
-
-    im.save("out.gif", save_all=True)
+    frames[0].save("out.gif", save_all=True, append_images=frames)
 
 def dec_test():
     im = Image.open("out.gif")
@@ -114,9 +91,9 @@ def dec_test():
     #print("Decoded:", palette)
 
     decoded = decode(palette)
-    print(decoded)
-    #decoded = [chr(i) for i in decoded]
-    #print("".join(decoded))
+    #print(decoded)
+    decoded = [chr(i) for i in decoded]
+    print("".join(decoded))
 
 enc_test()
 dec_test()
