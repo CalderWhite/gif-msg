@@ -1,7 +1,7 @@
 from PIL import Image
 
 
-def decode(arr):
+def decode_gct(arr):
     # python's sort function is lexographic (meaning it takes into consideration
     # the different values within each nested tuple in their order or priority)
     # this way there is always a winner when sorting the array
@@ -33,7 +33,7 @@ def decode(arr):
     return values
 
 
-def encode(values, raw):
+def encode_gct(values, raw):
     raw.sort()
 
     # the largest possible value + 1
@@ -58,18 +58,17 @@ def encode(values, raw):
     return out
 
 
-def enc_test():
-    s = "this is a test"
+def encode_gif(in_filename, out_filename, s):
     # the padding is required since the max value is dictated by the length of the list
     s += "\0" * (128 - len(s))
     values = [ord(i) for i in s]
 
-    im = Image.open("source.gif")
+    im = Image.open(in_filename)
     palette = []
     _p = im.getpalette()
     for i in range(0, len(_p), 3):
         palette += [(_p[i], _p[i+1], _p[i+2])]
-    encoded_gct = encode(values, palette.copy())
+    encoded_gct = encode_gct(values, palette.copy())
 
     new_indicies = [palette.index(i) for i in encoded_gct]
 
@@ -78,22 +77,26 @@ def enc_test():
         frames.append(im.remap_palette(new_indicies))
         im.seek(i)
 
-    # POST REMAP ################################
-    frames[0].save("out.gif", save_all=True, append_images=frames)
+    frames[0].save(out_filename, save_all=True, append_images=frames)
 
-def dec_test():
-    im = Image.open("out.gif")
+
+def decode_gif(filename):
+    im = Image.open(filename)
     palette = []
     _p = im.getpalette()
     for i in range(0, len(_p), 3):
         palette += [(_p[i], _p[i+1], _p[i+2])]
 
-    #print("Decoded:", palette)
-
-    decoded = decode(palette)
-    #print(decoded)
+    decoded = decode_gct(palette)
     decoded = [chr(i) for i in decoded]
-    print("".join(decoded))
+    return "".join(decoded)
 
-enc_test()
-dec_test()
+
+def main():
+    encode_gif("source.gif", "out.gif", "this is kinda fresh doe.")
+    s = decode_gif("out.gif")
+    print("Decoded:", s)
+
+
+if __name__ == '__main__':
+    main()
