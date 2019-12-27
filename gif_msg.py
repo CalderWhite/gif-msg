@@ -66,8 +66,8 @@ def encode_gif(in_filename, out_filename, s):
 
     im = Image.open(in_filename)
 
-
     frames = []
+
     for frame in ImageSequence.Iterator(im):
         palette = []
         _p = frame.getpalette()
@@ -77,7 +77,7 @@ def encode_gif(in_filename, out_filename, s):
         encoded_gct = encode_gct(values, palette.copy())
 
         new_indicies = [palette.index(i) for i in encoded_gct]
-        frames.append(im.remap_palette(new_indicies))
+        frames.append(frame.remap_palette(new_indicies))
 
     frames[0].save(out_filename, save_all=True, append_images=frames)
 
