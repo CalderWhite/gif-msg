@@ -1,10 +1,10 @@
 # gif-msg
 
-Hides a 128 byte message in a gif. The input and output's pixels are identical.  
+gif-msg hides a 128 byte message in a gif while keeping the pixel values identical.
 Can you figure out how I did it?
 
-No encryption/compression out of the box. You can get up to ~256 characters with
-a pre computed huffman table or limiting the charset to 32 unique characters.
+No encryption/compression is implemented out of the box. You can get up to ~256 characters with
+a pre computed huffman table or by limiting the charset to 32 unique characters.
 
 ## Usage
 
