@@ -1,3 +1,4 @@
+import sys
 from PIL import Image
 
 
@@ -42,7 +43,6 @@ def encode_gct(values, raw):
 
     firsts = []
     for i in range(len(values)):
-
         first = min(values[i], enc_max - i - 1)
         second = values[i] - first
 
@@ -92,11 +92,16 @@ def decode_gif(filename):
     return "".join(decoded)
 
 
-def main():
-    encode_gif("source.gif", "out.gif", "this is kinda fresh doe.")
-    s = decode_gif("out.gif")
-    print("Decoded:", s)
+def main(args):
+    command = args.pop(0)
+    if command == "encode":
+        encode_gif(*args)
+    elif command == "decode":
+        s = decode_gif(args[0])
+        print("Decoded:", s)
+    else:
+        print("Unknown command!")
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
