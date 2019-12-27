@@ -1,5 +1,6 @@
+#!/usr/bin/python3
 import sys
-from PIL import Image
+from PIL import Image, ImageSequence
 
 
 def decode_gct(arr):
@@ -64,18 +65,19 @@ def encode_gif(in_filename, out_filename, s):
     values = [ord(i) for i in s]
 
     im = Image.open(in_filename)
-    palette = []
-    _p = im.getpalette()
-    for i in range(0, len(_p), 3):
-        palette += [(_p[i], _p[i+1], _p[i+2])]
-    encoded_gct = encode_gct(values, palette.copy())
 
-    new_indicies = [palette.index(i) for i in encoded_gct]
 
     frames = []
-    for i in range(im.n_frames):
+    for frame in ImageSequence.Iterator(im):
+        palette = []
+        _p = frame.getpalette()
+        for i in range(0, len(_p), 3):
+            palette += [(_p[i], _p[i+1], _p[i+2])]
+
+        encoded_gct = encode_gct(values, palette.copy())
+
+        new_indicies = [palette.index(i) for i in encoded_gct]
         frames.append(im.remap_palette(new_indicies))
-        im.seek(i)
 
     frames[0].save(out_filename, save_all=True, append_images=frames)
 
