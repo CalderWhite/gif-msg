@@ -4,6 +4,7 @@ from PIL import Image, ImageSequence
 
 
 def decode_gct(arr):
+    """Find the hidden data within the order of the given gct."""
     # python's sort function is lexographic (meaning it takes into consideration
     # the different values within each nested tuple in their order or priority)
     # this way there is always a winner when sorting the array
@@ -36,6 +37,7 @@ def decode_gct(arr):
 
 
 def encode_gct(values, raw):
+    """Hide the 128 byte list values by specifically ordering the colours in raw (the original gct)."""
     raw.sort()
 
     # the largest possible value + 1
@@ -59,6 +61,16 @@ def encode_gct(values, raw):
     return out
 
 
+def get_palette(im):
+    """Helper function to group the colours in tuples of 3."""
+    palette = []
+    _p = im.getpalette()
+    for i in range(0, len(_p), 3):
+        palette += [(_p[i], _p[i+1], _p[i+2])]
+
+    return palette
+
+
 def encode_gif(in_filename, out_filename, s):
     # the padding is required since the max value is dictated by the length of the list
     s += "\0" * (128 - len(s))
@@ -67,13 +79,10 @@ def encode_gif(in_filename, out_filename, s):
     im = Image.open(in_filename)
 
     frames = []
-
-    for frame in ImageSequence.Iterator(im):
-        palette = []
-        _p = frame.getpalette()
-        for i in range(0, len(_p), 3):
-            palette += [(_p[i], _p[i+1], _p[i+2])]
-
+    it = ImageSequence.Iterator(im)
+    for frame in it:
+        # use the original palette. For some reason if we do not do this it creates bugs
+        palette = get_palette(im)
         encoded_gct = encode_gct(values, palette.copy())
 
         new_indicies = [palette.index(i) for i in encoded_gct]
@@ -84,11 +93,8 @@ def encode_gif(in_filename, out_filename, s):
 
 def decode_gif(filename):
     im = Image.open(filename)
-    palette = []
-    _p = im.getpalette()
-    for i in range(0, len(_p), 3):
-        palette += [(_p[i], _p[i+1], _p[i+2])]
 
+    palette = get_palette(im)
     decoded = decode_gct(palette)
     decoded = [chr(i) for i in decoded]
     return "".join(decoded)
@@ -107,3 +113,4 @@ def main(args):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+    #main(["encode", "bugs/russ.gif", "out.gif", "This is a test."])
