@@ -4,12 +4,12 @@ from PIL import Image, ImageSequence
 
 
 def decode_gct(arr):
-    """Find the hidden data within the order of the given gct."""
+    """Find the data hidden within the order of the given gct."""
     # python's sort function is lexographic (meaning it takes into consideration
     # the different values within each nested tuple in their order or priority)
     # this way there is always a winner when sorting the array
     # the only edge case where there would be an issue is if there were two colours
-    # of the same value, which would be redundant and thus has been eliminated 
+    # of the same value, which would be redundant and thus has been eliminated
     # from consideration
     index_table = sorted(arr)
 
@@ -53,7 +53,7 @@ def encode_gct(values, raw):
 
         out.insert(second, raw[-(i+1)])
 
-    # insert the firsts in reverse order as the first of the firsts must have 
+    # insert the firsts in reverse order as the first of the firsts must have
     # the largest list (most indicies) to chose from
     for i in range(len(values)-1, -1, -1):
         out.insert(firsts[i], raw[i])
@@ -79,8 +79,7 @@ def encode_gif(in_filename, out_filename, s):
     im = Image.open(in_filename)
 
     frames = []
-    it = ImageSequence.Iterator(im)
-    for frame in it:
+    for frame in ImageSequence.Iterator(im):
         # use the original palette. For some reason if we do not do this it creates bugs
         palette = get_palette(im)
         encoded_gct = encode_gct(values, palette.copy())
@@ -101,16 +100,15 @@ def decode_gif(filename):
 
 
 def main(args):
-    command = args.pop(0)
+    command = args.pop(0) if len(args) > 0 else ""
     if command == "encode":
         encode_gif(*args)
     elif command == "decode":
         s = decode_gif(args[0])
-        print("Decoded:", s)
+        print(s)
     else:
-        print("Unknown command!")
+        print("Unknown command! Commands: encode, decode")
 
 
 if __name__ == '__main__':
     main(sys.argv[1:])
-    #main(["encode", "bugs/russ.gif", "out.gif", "This is a test."])
