@@ -5,9 +5,9 @@ Can you figure out how I did it?
 
 No encryption/compression is implemented out of the box. You can get up to ~256 characters with
 a pre computed huffman table or by limiting the charset to 32 unique characters.  
-GIF's popular usage in messaging apps allow them to blend into the conversation naturally.
-This way users can send secret messages to eachother (that are potentially encrypted) without it
-being obvious.
+GIF's popular usage in messaging apps allow them to blend into conversations naturally.
+This way users can send secret (potentially encrypted) messages to eachother without it
+being obvious to a 3rd party.
 
 ## Usage
 
