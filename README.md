@@ -4,10 +4,10 @@ gif-msg hides a 128 byte message in a gif while keeping the pixel values identic
 Can you figure out how I did it?
 
 No encryption/compression is implemented out of the box. You can get up to ~256 characters with
-a pre computed huffman table or by limiting the charset to 32 unique characters.
-The application here is based in the popular use of gifs in online chats.
-By selecting a gif as a reaction to something in context the gif is completely natural as opposed
-to an encrypted message. Using this tool you can send such messages without looking suspicious.
+a pre computed huffman table or by limiting the charset to 32 unique characters.  
+GIF's popular usage in messaging apps allow them to blend into the conversation naturally.
+This way users can send secret messages to eachother (that are potentially encrypted) without it
+being obvious.
 
 ## Usage
 
