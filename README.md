@@ -25,10 +25,8 @@ Greyscale gifs are not currently supported.
 
 ## Bugs
 
-Currently PIL is having some issues with certain gifs. Please let me know if you have any issues
-or if you have a clue as to the source of PIL's issues. The issue in reference is the manifestation of 
-black (or background color) pixels all over the frames. This is simply from opening via `Image.open()`
-and saving via `Image.save(filename, save_all=True, append_images=[...])` with no modifications to the image.
+Currently PIL has issues handling transparency with gifs. This is simply from opening via `Image.open()`
+and saving via `Image.save(filename, save_all=True, append_images=[...])` with no modifications to the image. Tickets tracking this issue include [#1976](https://github.com/python-pillow/Pillow/issues/1976)
 
 ## Maintainers
 Calder White ([@CalderWhite](https://github.com/CalderWhite))  
