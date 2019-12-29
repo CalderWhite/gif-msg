@@ -29,3 +29,7 @@ Currently PIL is having some issues with certain gifs. Please let me know if you
 or if you have a clue as to the source of PIL's issues. The issue in reference is the manifestation of 
 black (or background color) pixels all over the frames. This is simply from opening via `Image.open()`
 and saving via `Image.save(filename, save_all=True, append_images=[...])` with no modifications to the image.
+
+## Maintainers
+Calder White ([@CalderWhite](https://github.com/CalderWhite))  
+_These projects are supported by Calder's [Patreon](https://www.patreon.com/calderwhite). If you enjoyed this project or found it useful, any monetary contributions are greatly appreciated and are put right back into these projects._
