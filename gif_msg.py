@@ -88,6 +88,8 @@ def encode_gif(in_filename, out_filename, s):
 
     im = Image.open(in_filename)
 
+    # we must record the new index of transparency since the encoding algorithm
+    # will change it. we then tell the PIL to use the new index when saving
     new_transparent = None
     frames = []
     for frame in ImageSequence.Iterator(im):
@@ -96,24 +98,27 @@ def encode_gif(in_filename, out_filename, s):
 
         # use the original palette. For some reason if we do not do this it creates bugs
         palette = get_palette(frame)
+
+        if len(palette) != 256:
+            print("WARNING: Palette size != 256 colors. This may result in issues")
+
+        # This can be supported by deduping the colors and then adding in unique colors
+        if len(palette) != len(set(palette)):
+            raise Exception("Duplicate colors found in color palette.")
+
         if transparent:
             palette[transp_index] = get_unused(palette)
-        print(palette)
 
         # if there is transparency, insert a unique color to represent it
         encoded_gct = encode_gct(values, palette.copy())
-        decoded = decode_gct(encoded_gct)
-        decoded = [chr(i) for i in decoded]
-        print("".join(decoded))
-        
+
         if transparent:
             new_transparent = encoded_gct.index(palette[transp_index])
 
         new_indicies = [palette.index(i) for i in encoded_gct]
-
         frames.append(frame.remap_palette(new_indicies))
 
-    if new_transparent != None:
+    if new_transparent is not None:
         frames[0].save(out_filename, format='GIF', save_all=True, transparency=new_transparent,
                        append_images=frames, disposal=0)
     else:
@@ -124,11 +129,11 @@ def encode_gif(in_filename, out_filename, s):
 def decode_gif(filename):
     im = Image.open(filename)
 
-    for frame in ImageSequence.Iterator(im):
-        palette = get_palette(frame)
-        decoded = decode_gct(palette)
-        decoded = [chr(i) for i in decoded]
-        print("".join(decoded))
+    palette = get_palette(im)
+    decoded = decode_gct(palette)
+    decoded = [chr(i) for i in decoded]
+
+    return "".join(decoded)
 
 
 def main(args):
