@@ -71,6 +71,16 @@ def get_palette(im):
     return palette
 
 
+def get_unused(arr):
+    """Returns an unused color."""
+    for r in range(256):
+        for g in range(256):
+            for b in range(256):
+                c = (r, g, b)
+                if c not in arr:
+                    return c
+
+
 def encode_gif(in_filename, out_filename, s):
     # the padding is required since the max value is dictated by the length of the list
     s += "\0" * (128 - len(s))
@@ -78,16 +88,24 @@ def encode_gif(in_filename, out_filename, s):
 
     im = Image.open(in_filename)
 
+    new_transparent = 0
     frames = []
     for frame in ImageSequence.Iterator(im):
+        transparent = "transparency" in frame.info
+        transp_index = frame.info.get("transparency")
+
         # use the original palette. For some reason if we do not do this it creates bugs
         palette = get_palette(im)
-        encoded_gct = encode_gct(values, palette.copy())
+        palette[transp_index] = get_unused(palette)
 
+        # if there is transparency, insert a unique color to represent it
+        encoded_gct = encode_gct(values, palette.copy())
         new_indicies = [palette.index(i) for i in encoded_gct]
+
         frames.append(frame.remap_palette(new_indicies))
 
-    frames[0].save(out_filename, save_all=True, append_images=frames)
+    frames[0].save(out_filename, format='GIF', save_all=True, transparency=200,
+                   append_images=frames, disposal=1)
 
 
 def decode_gif(filename):
