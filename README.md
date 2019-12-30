@@ -21,12 +21,9 @@ python3 gif_msg.py decode <infile>
 
 ## Known Bugs
 
-Greyscale gifs are not currently supported.
-
-## Bugs
-
-Currently PIL has issues handling transparency with gifs. This is simply from opening via `Image.open()`
-and saving via `Image.save(filename, save_all=True, append_images=[...])` with no modifications to the image. Tickets tracking this issue include [#1976](https://github.com/python-pillow/Pillow/issues/1976)
+- Greyscale gifs are not currently supported.
+- Gifs with <256 colors can only hold n//2 bytes, where n=number of colors
+- Gifs with duplicate colors in their color palette
 
 ## Maintainers
 Calder White ([@CalderWhite](https://github.com/CalderWhite))  

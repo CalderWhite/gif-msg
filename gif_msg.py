@@ -71,6 +71,16 @@ def get_palette(im):
     return palette
 
 
+def get_unused(arr):
+    """Returns an unused color."""
+    for r in range(256):
+        for g in range(256):
+            for b in range(256):
+                c = (r, g, b)
+                if c not in arr:
+                    return c
+
+
 def encode_gif(in_filename, out_filename, s):
     # the padding is required since the max value is dictated by the length of the list
     s += "\0" * (128 - len(s))
@@ -78,16 +88,42 @@ def encode_gif(in_filename, out_filename, s):
 
     im = Image.open(in_filename)
 
+    # we must record the new index of transparency since the encoding algorithm
+    # will change it. we then tell the PIL to use the new index when saving
+    new_transparent = None
     frames = []
     for frame in ImageSequence.Iterator(im):
+        transp_index = frame.info.get("transparency")
+        transparent = transp_index
+
         # use the original palette. For some reason if we do not do this it creates bugs
-        palette = get_palette(im)
+        palette = get_palette(frame)
+
+        if len(palette) != 256:
+            print("WARNING: Palette size != 256 colors. This may result in issues")
+
+        # This can be supported by deduping the colors and then adding in unique colors
+        if len(palette) != len(set(palette)):
+            raise Exception("Duplicate colors found in color palette.")
+
+        if transparent:
+            palette[transp_index] = get_unused(palette)
+
+        # if there is transparency, insert a unique color to represent it
         encoded_gct = encode_gct(values, palette.copy())
+
+        if transparent:
+            new_transparent = encoded_gct.index(palette[transp_index])
 
         new_indicies = [palette.index(i) for i in encoded_gct]
         frames.append(frame.remap_palette(new_indicies))
 
-    frames[0].save(out_filename, save_all=True, append_images=frames)
+    if new_transparent is not None:
+        frames[0].save(out_filename, format='GIF', save_all=True, transparency=new_transparent,
+                       append_images=frames, disposal=0)
+    else:
+        frames[0].save(out_filename, format='GIF', save_all=True,
+                       append_images=frames, disposal=0)
 
 
 def decode_gif(filename):
@@ -96,6 +132,7 @@ def decode_gif(filename):
     palette = get_palette(im)
     decoded = decode_gct(palette)
     decoded = [chr(i) for i in decoded]
+
     return "".join(decoded)
 
 
