@@ -88,33 +88,47 @@ def encode_gif(in_filename, out_filename, s):
 
     im = Image.open(in_filename)
 
-    new_transparent = 0
+    new_transparent = None
     frames = []
     for frame in ImageSequence.Iterator(im):
-        transparent = "transparency" in frame.info
         transp_index = frame.info.get("transparency")
+        transparent = transp_index
 
         # use the original palette. For some reason if we do not do this it creates bugs
-        palette = get_palette(im)
-        palette[transp_index] = get_unused(palette)
+        palette = get_palette(frame)
+        if transparent:
+            palette[transp_index] = get_unused(palette)
+        print(palette)
 
         # if there is transparency, insert a unique color to represent it
         encoded_gct = encode_gct(values, palette.copy())
+        decoded = decode_gct(encoded_gct)
+        decoded = [chr(i) for i in decoded]
+        print("".join(decoded))
+        
+        if transparent:
+            new_transparent = encoded_gct.index(palette[transp_index])
+
         new_indicies = [palette.index(i) for i in encoded_gct]
 
         frames.append(frame.remap_palette(new_indicies))
 
-    frames[0].save(out_filename, format='GIF', save_all=True, transparency=200,
-                   append_images=frames, disposal=1)
+    if new_transparent != None:
+        frames[0].save(out_filename, format='GIF', save_all=True, transparency=new_transparent,
+                       append_images=frames, disposal=0)
+    else:
+        frames[0].save(out_filename, format='GIF', save_all=True,
+                       append_images=frames, disposal=0)
 
 
 def decode_gif(filename):
     im = Image.open(filename)
 
-    palette = get_palette(im)
-    decoded = decode_gct(palette)
-    decoded = [chr(i) for i in decoded]
-    return "".join(decoded)
+    for frame in ImageSequence.Iterator(im):
+        palette = get_palette(frame)
+        decoded = decode_gct(palette)
+        decoded = [chr(i) for i in decoded]
+        print("".join(decoded))
 
 
 def main(args):
