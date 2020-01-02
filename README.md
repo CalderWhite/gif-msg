@@ -25,6 +25,8 @@ python3 gif_msg.py decode <infile>
 - Gifs with <256 colors can only hold n//2 bytes, where n=number of colors
 - Gifs with duplicate colors in their color palette
 
+**Note**: If there color white (`0xFFFFFF`) is in the color palette and the image has transparency, this will create a duplicate color error since PIL overwrites what is at the transparent index in the palette as `0xFFFFFF`)
+
 ## Maintainers
 Calder White ([@CalderWhite](https://github.com/CalderWhite))  
 _These projects are supported by Calder's [Patreon](https://www.patreon.com/calderwhite). If you enjoyed this project or found it useful, any monetary contributions are greatly appreciated and are put right back into these projects._

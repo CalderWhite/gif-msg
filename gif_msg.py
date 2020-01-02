@@ -3,7 +3,7 @@ import sys
 from PIL import Image, ImageSequence
 
 
-def decode_gct(arr):
+def decode_palette(encoded_palette):
     """Find the data hidden within the order of the given gct."""
     # python's sort function is lexographic (meaning it takes into consideration
     # the different values within each nested tuple in their order or priority)
@@ -11,81 +11,81 @@ def decode_gct(arr):
     # the only edge case where there would be an issue is if there were two colours
     # of the same value, which would be redundant and thus has been eliminated
     # from consideration
-    index_table = sorted(arr)
+    index_ref = sorted(encoded_palette)
 
     # there will be half as many values as there are in the array since each time
     # you use up an index, one of the lower indexes must be used to complete the byte
     # (think of the gaussian summation theorem proof, if that helps)
-    value_count = len(arr) // 2
-    values = [0] * value_count
+    decoded_count = len(encoded_palette) // 2
+    decoded = [0] * decoded_count
 
     # first do the initial values
-    for i in range(value_count):
-        index = arr.index(index_table[i])
-        values[i] = index
+    for i in range(decoded_count):
+        index = encoded_palette.index(index_ref[i])
+        decoded[i] = index
 
-        arr.pop(index)
+        encoded_palette.pop(index)
 
     # second do the values that are add on to the initial values to get them up to a byte
-    for i in range(value_count, len(index_table)):
-        index = arr.index(index_table[i])
-        values[value_count-1-i] += index
+    for i in range(decoded_count, len(index_ref)):
+        index = encoded_palette.index(index_ref[i])
+        decoded[decoded_count-1-i] += index
 
-        arr.pop(index)
+        encoded_palette.pop(index)
 
-    return values
+    return decoded
 
 
-def encode_gct(values, raw):
-    """Hide the 128 byte list values by specifically ordering the colours in raw (the original gct)."""
-    raw.sort()
+def encode_palette(plaintext, palette):
+    """Hide the 128 byte list values by specifically ordering the colours in palette."""
+    palette.sort()
 
-    # the largest possible value + 1
-    enc_max = len(values) * 2
-    out = []
+    encoded_size = len(plaintext) * 2
+    encoded = []
 
-    firsts = []
-    for i in range(len(values)):
-        first = min(values[i], enc_max - i - 1)
-        second = values[i] - first
+    # the half of the colours which have the larger amount of possible indicies
+    # one small + one large = len(palette)
+    # if the palette is 256 elements long, then small + large = 1 byte
+    larges = []
+    for i, c in enumerate(plaintext):
+        large = min(c, encoded_size - i - 1)
+        small = c - large
 
-        firsts.append(first)
+        larges.append(large)
+        encoded.insert(small, palette[ -(i + 1) ])
 
-        out.insert(second, raw[-(i+1)])
+    # the larges need the most amount of indicies to choose from, so they are 
+    # inserted last and in reverse order
+    for i in range(len(plaintext)-1, -1, -1):
+        encoded.insert(larges[i], palette[i])
 
-    # insert the firsts in reverse order as the first of the firsts must have
-    # the largest list (most indicies) to chose from
-    for i in range(len(values)-1, -1, -1):
-        out.insert(firsts[i], raw[i])
-
-    return out
+    return encoded
 
 
 def get_palette(im):
-    """Helper function to group the colours in tuples of 3."""
-    palette = []
-    _p = im.getpalette()
-    for i in range(0, len(_p), 3):
-        palette += [(_p[i], _p[i+1], _p[i+2])]
+    """Helper function to group the palette of im into tuples of 3."""
+    grouped_palette = []
+    palette = im.getpalette()
+    for i in range(0, len(palette), 3):
+        grouped_palette += [(palette[i], palette[i+1], palette[i+2])]
 
-    return palette
+    return grouped_palette
 
 
-def get_unused(arr):
+def get_unused(palette):
     """Returns an unused color."""
     for r in range(256):
         for g in range(256):
             for b in range(256):
                 c = (r, g, b)
-                if c not in arr:
+                if c not in palette:
                     return c
 
+    # this should never happen
+    return None
 
-def encode_gif(in_filename, out_filename, s):
-    # the padding is required since the max value is dictated by the length of the list
-    s += "\0" * (128 - len(s))
-    values = [ord(i) for i in s]
 
+def encode_gif(in_filename, out_filename, plaintext):
     im = Image.open(in_filename)
 
     # we must record the new index of transparency since the encoding algorithm
@@ -93,26 +93,33 @@ def encode_gif(in_filename, out_filename, s):
     new_transparent = None
     frames = []
     for frame in ImageSequence.Iterator(im):
-        transp_index = frame.info.get("transparency")
-        transparent = transp_index
-
-        # use the original palette. For some reason if we do not do this it creates bugs
         palette = get_palette(frame)
+        transp_index = frame.info.get("transparency")
+        is_transparent = transp_index
+
+        if is_transparent:
+            palette[transp_index] = get_unused(palette)
 
         if len(palette) != 256:
             print("WARNING: Palette size != 256 colors. This may result in issues")
-
         # This can be supported by deduping the colors and then adding in unique colors
         if len(palette) != len(set(palette)):
             raise Exception("Duplicate colors found in color palette.")
 
-        if transparent:
-            palette[transp_index] = get_unused(palette)
+        # pad the input to meet the length of palette
+        padded_plaintext = plaintext + "\0" * (len(palette)//2 - len(plaintext))
+        plaintext_ints = [ord(i) for i in padded_plaintext]
 
         # if there is transparency, insert a unique color to represent it
-        encoded_gct = encode_gct(values, palette.copy())
+        encoded_gct = encode_palette(plaintext_ints, palette.copy())
 
-        if transparent:
+        decoded = decode_palette(encoded_gct.copy())
+        decoded = [chr(i) for i in decoded]
+
+        print("".join(decoded))
+
+
+        if is_transparent:
             new_transparent = encoded_gct.index(palette[transp_index])
 
         new_indicies = [palette.index(i) for i in encoded_gct]
@@ -129,11 +136,12 @@ def encode_gif(in_filename, out_filename, s):
 def decode_gif(filename):
     im = Image.open(filename)
 
-    palette = get_palette(im)
-    decoded = decode_gct(palette)
-    decoded = [chr(i) for i in decoded]
+    for frame in ImageSequence.Iterator(im):
+        palette = get_palette(frame)
+        decoded = decode_palette(palette)
+        decoded = [chr(i) for i in decoded]
 
-    return "".join(decoded)
+        print("".join(decoded))
 
 
 def main(args):
@@ -141,8 +149,8 @@ def main(args):
     if command == "encode":
         encode_gif(*args)
     elif command == "decode":
-        s = decode_gif(args[0])
-        print(s)
+        plaintext = decode_gif(args[0])
+        print(plaintext)
     else:
         print("Unknown command! Commands: encode, decode")
 
