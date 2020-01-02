@@ -97,6 +97,7 @@ def encode_gif(in_filename, out_filename, plaintext):
         transp_index = frame.info.get("transparency")
         is_transparent = transp_index
 
+        # if there is transparency, set the index to a unique color to represent it
         if is_transparent:
             palette[transp_index] = get_unused(palette)
 
@@ -109,15 +110,7 @@ def encode_gif(in_filename, out_filename, plaintext):
         # pad the input to meet the length of palette
         padded_plaintext = plaintext + "\0" * (len(palette)//2 - len(plaintext))
         plaintext_ints = [ord(i) for i in padded_plaintext]
-
-        # if there is transparency, insert a unique color to represent it
         encoded_gct = encode_palette(plaintext_ints, palette.copy())
-
-        decoded = decode_palette(encoded_gct.copy())
-        decoded = [chr(i) for i in decoded]
-
-        print("".join(decoded))
-
 
         if is_transparent:
             new_transparent = encoded_gct.index(palette[transp_index])
