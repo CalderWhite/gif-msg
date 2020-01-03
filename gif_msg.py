@@ -108,9 +108,9 @@ def encode_gif(im, plaintext):
             raise Exception("Duplicate colors found in color palette.")
 
         # pad the input to meet the length of palette
-        padded_plaintext = plaintext + "\0" * (len(palette)//2 - len(plaintext))
-        plaintext_ints = [ord(i) for i in padded_plaintext]
-        encoded_gct = encode_palette(plaintext_ints, palette.copy())
+        padding = b"\0" * (len(palette)//2 - len(plaintext))
+        padded_plaintext = b"".join([plaintext, padding])
+        encoded_gct = encode_palette(padded_plaintext, palette.copy())
 
         if is_transparent:
             new_transparent = encoded_gct.index(palette[transp_index])
@@ -135,9 +135,8 @@ def decode_gif(im):
     """Decodes the given GIF (im)."""
     palette = get_palette(im)
     decoded = decode_palette(palette)
-    decoded = [chr(i) for i in decoded]
 
-    return "".join(decoded)
+    return bytes(decoded)
 
 
 def copy_bytes_to_file(src, dst, bufsize=16384):
@@ -153,13 +152,13 @@ def main(args):
     if command == "encode":
         in_filename, out_filename, plaintext = args
         im = Image.open(in_filename)
-        bytes_out = encode_gif(im, plaintext)
+        bytes_out = encode_gif(im, plaintext.encode('utf-8'))
 
         with open(out_filename, 'wb') as w:
             copy_bytes_to_file(bytes_out, w)
     elif command == "decode":
         im = Image.open(args[0])
-        plaintext = decode_gif(im)
+        plaintext = decode_gif(im).decode('utf-8')
         print(plaintext)
     else:
         print("Unknown command! Commands: encode, decode")
