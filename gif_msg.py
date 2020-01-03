@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import sys
+import io
 from PIL import Image, ImageSequence
 
 
@@ -85,9 +86,8 @@ def get_unused(palette):
     return None
 
 
-def encode_gif(in_filename, out_filename, plaintext):
-    im = Image.open(in_filename)
-
+def encode_gif(im, plaintext):
+    """Encodes the plaintext into the given GIF (im) and returns the bytes of the encoded GIF."""
     # we must record the new index of transparency since the encoding algorithm
     # will change it. we then tell the PIL to use the new index when saving
     new_transparent = None
@@ -118,31 +118,48 @@ def encode_gif(in_filename, out_filename, plaintext):
         new_indicies = [palette.index(i) for i in encoded_gct]
         frames.append(frame.remap_palette(new_indicies))
 
+    bytes_out = io.BytesIO()
     if new_transparent is not None:
-        frames[0].save(out_filename, format='GIF', save_all=True, transparency=new_transparent,
+        frames[0].save(bytes_out, format='GIF', save_all=True, transparency=new_transparent,
                        append_images=frames, disposal=0)
     else:
-        frames[0].save(out_filename, format='GIF', save_all=True,
+        frames[0].save(bytes_out, format='GIF', save_all=True,
                        append_images=frames, disposal=0)
 
+    bytes_out.seek(0)
 
-def decode_gif(filename):
-    im = Image.open(filename)
+    return bytes_out
 
-    for frame in ImageSequence.Iterator(im):
-        palette = get_palette(frame)
-        decoded = decode_palette(palette)
-        decoded = [chr(i) for i in decoded]
 
-        print("".join(decoded))
+def decode_gif(im):
+    """Decodes the given GIF (im)."""
+    palette = get_palette(im)
+    decoded = decode_palette(palette)
+    decoded = [chr(i) for i in decoded]
+
+    return "".join(decoded)
+
+
+def copy_bytes_to_file(src, dst, bufsize=16384):
+    while True:
+        buf = src.read(bufsize)
+        if not buf:
+            break
+        dst.write(buf)
 
 
 def main(args):
     command = args.pop(0) if len(args) > 0 else ""
     if command == "encode":
-        encode_gif(*args)
+        in_filename, out_filename, plaintext = args
+        im = Image.open(in_filename)
+        bytes_out = encode_gif(im, plaintext)
+
+        with open(out_filename, 'wb') as w:
+            copy_bytes_to_file(bytes_out, w)
     elif command == "decode":
-        plaintext = decode_gif(args[0])
+        im = Image.open(args[0])
+        plaintext = decode_gif(im)
         print(plaintext)
     else:
         print("Unknown command! Commands: encode, decode")
