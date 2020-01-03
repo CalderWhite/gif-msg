@@ -4,6 +4,7 @@ import io
 import argparse
 
 from PIL import Image, ImageSequence
+from simple_aes_cipher.simple_aes_cipher import AESCipher, generate_secret_key
 
 
 def decode_palette(encoded_palette):
@@ -148,6 +149,19 @@ def copy_bytes_to_file(src, dst, bufsize=16384):
             break
         dst.write(buf)
 
+def encrypt_AES(plaintext, key):
+    key = generate_secret_key(key)
+    cipher = AESCipher(key)
+
+    return cipher.encrypt(plaintext)
+
+
+def decrypt_AES(ciphertext, key):
+    key = generate_secret_key(key)
+    cipher = AESCipher(key)
+
+    return cipher.decrypt(ciphertext)
+
 
 def main(args):
     parser = argparse.ArgumentParser(description="Encode/Decode 128 bytes"
@@ -169,19 +183,36 @@ def main(args):
 
     args = parser.parse_args()
 
+    use_crypto = args.key is not None
+
     if args.command == "encode":
         if args.body is None or args.outfile is None:
             parser.error("outfile and body are required for encoding.")
 
         im = Image.open(args.infile)
-        bytes_out = encode_gif(im, args.body.encode('utf-8'))
+
+        if use_crypto:
+            body = encrypt_AES(args.body, args.key)
+        else:
+            body = args.body.encode('utf-8')
+
+        bytes_out = encode_gif(im, body)
 
         with open(args.outfile, 'wb') as w:
             copy_bytes_to_file(bytes_out, w)
     elif args.command == "decode":
         im = Image.open(args.infile)
-        plaintext = decode_gif(im).decode('utf-8')
-        print(plaintext)
+        body = decode_gif(im)
+
+        if use_crypto:
+            plaintext = decrypt_AES(body, args.key)
+        else:
+            plaintext = body
+        sys.stdout.buffer.write(plaintext)
+        sys.stdout.buffer.flush()
+
+        # add a newline after the raw bytes
+        print()
 
 
 if __name__ == '__main__':

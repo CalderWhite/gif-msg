@@ -1,3 +1,3 @@
 [submodule "server/Simple-AES-Cipher"]
-	path = Simple-AES-Cipher
+	path = simple_aes_cipher
 	url = https://github.com/CalderWhite/Simple-AES-Cipher
