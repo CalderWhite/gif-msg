@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import sys
 import io
+import argparse
+
 from PIL import Image, ImageSequence
 
 
@@ -148,20 +150,38 @@ def copy_bytes_to_file(src, dst, bufsize=16384):
 
 
 def main(args):
-    command = args.pop(0) if len(args) > 0 else ""
-    if command == "encode":
-        in_filename, out_filename, plaintext = args
-        im = Image.open(in_filename)
-        bytes_out = encode_gif(im, plaintext.encode('utf-8'))
+    parser = argparse.ArgumentParser(description="Encode/Decode 128 bytes"
+                                     " into a gif file.")
+    parser.add_argument("command", type=str, help="The command to be run (encode/decode)")
+    parser.add_argument("infile", type=str, help="The input gif.")
+    parser.add_argument("outfile", type=str, help="The outfile gif. (applicable for encode)",
+                        nargs='?')
+    parser.add_argument("body", type=str, help="The message to be encoded. "
+                        " (applicable for encode)", nargs='?')
 
-        with open(out_filename, 'wb') as w:
+    parser.add_argument("--key", type=str, default=None,
+                        help="If given a key, AES will be used to encrypt/decrypt the message body.")
+    parser.add_argument("--compress", const=False, action="store_const",
+                        help="If supplied, a pre computed"
+                        " huffman table will be used to compress the message body."
+                        " NOTE: This will not always result in positive compression"
+                        " since the huffman table is pre computed.")
+
+    args = parser.parse_args()
+
+    if args.command == "encode":
+        if args.body is None or args.outfile is None:
+            parser.error("outfile and body are required for encoding.")
+
+        im = Image.open(args.infile)
+        bytes_out = encode_gif(im, args.body.encode('utf-8'))
+
+        with open(args.outfile, 'wb') as w:
             copy_bytes_to_file(bytes_out, w)
-    elif command == "decode":
-        im = Image.open(args[0])
+    elif args.command == "decode":
+        im = Image.open(args.infile)
         plaintext = decode_gif(im).decode('utf-8')
         print(plaintext)
-    else:
-        print("Unknown command! Commands: encode, decode")
 
 
 if __name__ == '__main__':
