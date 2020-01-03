@@ -1,0 +1,97 @@
+<!-- This isn't the greatest code. I just threw it together so I could use gif_msg on the web. !-->
+
+<html>
+    <head>
+        <script
+          src="https://code.jquery.com/jquery-3.4.1.min.js"
+          integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo="
+          crossorigin="anonymous"></script>
+
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" 
+            crossorigin="anonymous">
+
+<style>
+        .form-wrapper {
+            margin-top:2em;
+            /*background-color: grey;*/
+            display: inline-block;
+        }
+
+        .deploy-form {
+            background-color: #F0F0F0;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 80%;
+        }
+
+        button {
+            margin: 5px;
+        }
+
+</style>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <div class="d-flex justify-content-center form-wrapper">
+            <form id="upload-file" method='POST' class="deploy-form">
+                <div class="form-group">
+                    <input name="file" type="file" class="form-control-file">
+                </div>
+                <div id="plaintext-out" class="form-group">
+                    <label>Plaintext</label>
+                    <input id="plaintext" name="plaintext" class="form-control" placeholder="Enter your desired plaintext">
+                </div>
+                <center>
+                    <button type="button" onclick="toggleEncDec();" class="btn btn-primary">Encode/Decode Toggle</button>
+                    <button id="upload-btn" type="button" class="btn btn-primary">Encode</button>
+                </center>
+            </form>
+        </div>
+
+        <center>
+            <p>Output:</p>
+            <img id="output" />
+            <p id="text-out"></p>
+        </center>
+
+        <script>
+// global var to track whether we are sending an encoding or decoding request
+isEnc = true;
+function toggleEncDec() {
+    isEnc = !isEnc;
+    $('#upload-btn').text(isEnc ? "Encode" : "Decode");
+    $('#plaintext-out').css('display', isEnc ? '' : 'none');
+}
+$('#upload-btn').click(function() {
+    let file = $('#upload-file')[0];
+    let form_data = new FormData(file);
+    $.ajax({
+        type: 'POST',
+        url: '/api/' + (isEnc ? 'encode' : 'decode'),
+        data: form_data,
+        contentType: false,
+        cache: false,
+        processData: false,
+        xhr: function() { // force jquery to give us a blob by directly accessing the native xhr object
+            var xhr = new XMLHttpRequest();
+            if (isEnc) {
+                xhr.responseType= 'blob'
+            }
+            return xhr;
+        },
+        success: function(data) {
+            if (isEnc) {
+                let url = URL.createObjectURL(blob);
+                document.getElementById("output").src = url;
+            } else {
+                $("#text-out").text(data.substring(0, data.search("\0")));
+            }
+        },
+    });
+});
+        </script>
+    </body>
+</html>
