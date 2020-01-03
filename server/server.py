@@ -46,4 +46,13 @@ def index():
     return send_file("index.html")
 
 
-app.run()
+def run():
+    app.run()
+
+
+def run_prod():
+    app.run(host="0.0.0.0", port=80)
+
+
+if __name__ == '__main__':
+    run()
