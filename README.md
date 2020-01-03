@@ -5,9 +5,11 @@ Can you figure out how I did it?
 
 GIF's popular usage in messaging apps allow them to blend into conversations naturally.
 This way users can send secret (potentially encrypted) messages to eachother without it
-being obvious to a 3rd party.
+being obvious to a 3rd party. This method of steganography is also largely applicable on message forums.
 
 ## Usage
+
+Please use the [Latest Stable Release](https://github.com/CalderWhite/gif-msg/releases/latest) and note that the semantic versioning indicates when changes will not be backwards compatible (so the major release must match if you are to exchange gifs with another version).
 
 ```
 usage: gif_msg.py [-h] [--key KEY] [--compress]
