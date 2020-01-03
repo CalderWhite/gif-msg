@@ -84,7 +84,7 @@ $('#upload-btn').click(function() {
         },
         success: function(data) {
             if (isEnc) {
-                let url = URL.createObjectURL(blob);
+                let url = URL.createObjectURL(data);
                 document.getElementById("output").src = url;
             } else {
                 $("#text-out").text(data.substring(0, data.search("\0")));
