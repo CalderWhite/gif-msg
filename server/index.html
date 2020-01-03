@@ -52,6 +52,12 @@
         </div>
 
         <center>
+			<p id="error-text" style="display:none" class="alert alert-danger" role="alert">
+			The server has run into an issue processing your gif.
+			This is most likely due to a faulty gif. A list of known bugs with the encoder can be found
+			<a href="https://github.com/CalderWhite/gif-msg#known-bugs">here</a>
+			</p>
+
             <p>Output:</p>
             <img id="output" />
             <p id="text-out"></p>
@@ -89,7 +95,12 @@ $('#upload-btn').click(function() {
             } else {
                 $("#text-out").text(data.substring(0, data.search("\0")));
             }
+
+			document.getElementById("error-text").style.display = "none";
         },
+		error: function(data) {
+			document.getElementById("error-text").style.display = "";
+		}
     });
 });
         </script>
