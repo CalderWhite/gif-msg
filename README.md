@@ -3,20 +3,31 @@
 gif-msg hides a 128 byte message in a gif while keeping the pixel values identical.
 Can you figure out how I did it?
 
-No encryption/compression is implemented out of the box. You can get up to ~256 characters with
-a pre computed huffman table or by limiting the charset to 32 unique characters.  
 GIF's popular usage in messaging apps allow them to blend into conversations naturally.
 This way users can send secret (potentially encrypted) messages to eachother without it
 being obvious to a 3rd party.
 
 ## Usage
 
-```bash
-# hiding the string in the gif.
-python3 gif_msg.py encode <infile> <outfile> <string>
+```
+usage: gif_msg.py [-h] [--key KEY] [--compress]
+                  command infile [outfile] [body]
 
-# decoding the hidden string in a gif (prints to console)
-python3 gif_msg.py decode <infile>
+Encode/Decode 128 bytes into a gif file.
+
+positional arguments:
+  command     The command to be run (encode/decode)
+  infile      The input gif.
+  outfile     The outfile gif. (applicable for encode)
+  body        The message to be encoded. (applicable for encode)
+
+optional arguments:
+  -h, --help  show this help message and exit
+  --key KEY   If given a key, AES will be used to encrypt/decrypt the message
+              body.
+  --compress  If supplied, a pre computed huffman table will be used to
+              compress the message body. NOTE: This will not always result in
+              positive compression since the huffman table is pre computed.
 ```
 
 ## Known Bugs
