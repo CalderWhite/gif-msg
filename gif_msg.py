@@ -1,7 +1,8 @@
 #!/usr/bin/python3
-import sys
-import io
 import argparse
+import io
+import subprocess
+import sys
 
 from PIL import Image, ImageSequence
 from simple_aes_cipher.simple_aes_cipher import AESCipher, generate_secret_key
@@ -132,7 +133,14 @@ def encode_gif(im, plaintext):
 
     bytes_out.seek(0)
 
-    return bytes_out
+    # re-encode the binary data with gifsicle since its encoder uses compression
+    proc = subprocess.Popen('gifsicle', stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE)
+    proc.stdin.write(bytes_out.read())
+    proc.stdin.flush()
+    proc.stdin.close()
+
+    return proc.stdout
 
 
 def decode_gif(im):

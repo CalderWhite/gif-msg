@@ -3,9 +3,25 @@
 gif-msg hides a 128 byte message in a gif while keeping the pixel values identical.
 Can you figure out how I did it?
 
-GIF's popular usage in messaging apps allow them to blend into conversations naturally.
+gif's popular usage in messaging apps allow them to blend into conversations naturally.
 This way users can send secret (potentially encrypted) messages to eachother without it
 being obvious to a 3rd party. This method of steganography is also largely applicable on message forums.
+
+## Installation
+
+Pillow's gif encoder does not support lossless compression, so gifsicle is used
+to re-encode the gif such that its file size does not increase.
+
+```bash
+# Install dependancies
+pip3 install -r requirements.txt
+sudo apt install gifsicle
+
+# Clone module
+git clone https://github.com/CalderWhite/gif-msg/
+cd gif-msg
+git submodle update --init --recursive
+```
 
 ## Usage
 
