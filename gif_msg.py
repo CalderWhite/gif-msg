@@ -5,6 +5,7 @@ import argparse
 
 from PIL import Image, ImageSequence
 from simple_aes_cipher.simple_aes_cipher import AESCipher, generate_secret_key
+from PySmaz import smaz
 
 
 def decode_palette(encoded_palette):
@@ -175,7 +176,7 @@ def main(args):
 
     parser.add_argument("--key", type=str, default=None,
                         help="If given a key, AES will be used to encrypt/decrypt the message body.")
-    parser.add_argument("--compress", const=False, action="store_const",
+    parser.add_argument("--compress", const=True, action="store_const",
                         help="If supplied, a pre computed"
                         " huffman table will be used to compress the message body."
                         " NOTE: This will not always result in positive compression"
@@ -184,6 +185,7 @@ def main(args):
     args = parser.parse_args()
 
     use_crypto = args.key is not None
+    use_compress = args.compress is not None
 
     if args.command == "encode":
         if args.body is None or args.outfile is None:
@@ -191,10 +193,15 @@ def main(args):
 
         im = Image.open(args.infile)
 
-        if use_crypto:
-            body = encrypt_AES(args.body, args.key)
+        if use_compress:
+            body = smaz.compress(args.body)
         else:
-            body = args.body.encode('utf-8')
+            body = args.body
+
+        if use_crypto:
+            body = encrypt_AES(body, args.key)
+        else:
+            body = body.encode('utf-8')
 
         bytes_out = encode_gif(im, body)
 
@@ -208,11 +215,17 @@ def main(args):
             plaintext = decrypt_AES(body, args.key)
         else:
             plaintext = body
-        sys.stdout.buffer.write(plaintext)
-        sys.stdout.buffer.flush()
 
-        # add a newline after the raw bytes
-        print()
+        if use_compress:
+            plaintext = smaz.decompress(plaintext.decode('utf-8'))
+
+            print(plaintext)
+        else:
+            sys.stdout.buffer.write(plaintext)
+            sys.stdout.buffer.flush()
+
+            # add a newline after the raw bytes
+            print()
 
 
 if __name__ == '__main__':
