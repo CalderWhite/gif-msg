@@ -185,10 +185,9 @@ def main(args):
     parser.add_argument("--key", type=str, default=None,
                         help="If given a key, AES will be used to encrypt/decrypt the message body.")
     parser.add_argument("--compress", const=True, action="store_const",
-                        help="If supplied, a pre computed"
-                        " huffman table will be used to compress the message body."
-                        " NOTE: This will not always result in positive compression"
-                        " since the huffman table is pre computed.")
+                        help="If supplied, a pre computed smaz will be used to"
+                        " compress the body. NOTE: This is only effective with"
+                        " language, and binary data is best left uncompressed")
 
     args = parser.parse_args()
 
@@ -205,6 +204,8 @@ def main(args):
             body = smaz.compress(args.body)
         else:
             body = args.body
+
+        print(len(body))
 
         if use_crypto:
             body = encrypt_AES(body, args.key)

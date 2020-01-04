@@ -43,9 +43,9 @@ optional arguments:
   -h, --help  show this help message and exit
   --key KEY   If given a key, AES will be used to encrypt/decrypt the message
               body.
-  --compress  If supplied, a pre computed huffman table will be used to
-              compress the message body. NOTE: This will not always result in
-              positive compression since the huffman table is pre computed.
+  --compress  If supplied, a pre computed smaz will be used to compress the
+              body. NOTE: This is only effective with language, and binary
+              data is best left uncompressed
 ```
 
 ## Known Bugs
