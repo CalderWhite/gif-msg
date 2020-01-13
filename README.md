@@ -20,7 +20,7 @@ sudo apt install gifsicle
 # Clone module
 git clone https://github.com/CalderWhite/gif-msg/
 cd gif-msg
-git submodle update --init --recursive
+git submodule update --init --recursive
 ```
 
 ## Usage
