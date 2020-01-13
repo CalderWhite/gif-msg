@@ -185,7 +185,7 @@ def main(args):
     parser.add_argument("--key", type=str, default=None,
                         help="If given a key, AES will be used to encrypt/decrypt the message body.")
     parser.add_argument("--compress", const=True, action="store_const",
-                        help="If supplied, a pre computed smaz will be used to"
+                        help="If supplied, smaz will be used to"
                         " compress the body. NOTE: This is only effective with"
                         " language, and binary data is best left uncompressed")
 
