@@ -21,7 +21,8 @@ def decode_palette(encoded_palette):
 
     # there will be half as many values as there are in the array since each time
     # you use up an index, one of the lower indexes must be used to complete the byte
-    # (think of the gaussian summation theorem proof, if that helps)
+    # (think of the arithmetic summation formula proof, if that helps)
+    # https://www.purplemath.com/modules/series6.htm
     decoded_count = len(encoded_palette) // 2
     decoded = [0] * decoded_count
 
@@ -32,7 +33,7 @@ def decode_palette(encoded_palette):
 
         encoded_palette.pop(index)
 
-    # second do the values that are add on to the initial values to get them up to a byte
+    # second do the values that are added on to the initial values to get them up to a byte
     for i in range(decoded_count, len(index_ref)):
         index = encoded_palette.index(index_ref[i])
         decoded[decoded_count-1-i] += index
@@ -43,7 +44,7 @@ def decode_palette(encoded_palette):
 
 
 def encode_palette(plaintext, palette):
-    """Hide the 128 byte list values by specifically ordering the colours in palette."""
+    """Hide the 128 byte list values by specifically ordering the colours in the palette."""
     palette.sort()
 
     encoded_size = len(plaintext) * 2
